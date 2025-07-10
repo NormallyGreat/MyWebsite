@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Journal | Photo Memories</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #ff69b4;
+      --primary-dark: #e84ca1;
+      --secondary: #a18fff;
+      --glass: rgba(255, 255, 255, 0.25);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --glass-dark: rgba(0, 0, 0, 0.15);
+      --text: #2c2c2c;
+      --text-light: #5a5a5a;
+      --white: #ffffff;
+      --shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+      --inner-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+      --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+      --himanshu: #3498db;
+      --sakshi: #e84393;
+      --delete: #e74c3c;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #ffd9e8, #d9e8ff);
+      margin: 0;
+      padding: 0;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow-y: auto;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 30%, rgba(255, 182, 193, 0.15) 0%, transparent 40%), 
+                  radial-gradient(circle at 80% 70%, rgba(163, 191, 255, 0.15) 0%, transparent 40%);
+      z-index: -1;
+    }
+    
+    .app-container {
+      width: 95%;
+      max-width: 1200px;
+      margin: 30px auto;
+      min-height: 90vh;
+      backdrop-filter: blur(20px);
+      background: var(--glass);
+      border-radius: 28px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Liquid Glass Effects */
+    .glass-panel {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    
+    .glass-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(31, 38, 135, 0.25);
+    }
+    
+    /* Lock Screen */
+    .lock-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #4a154b, #7a1b7a);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: var(--white);
+      padding: 20px;
+      transition: var(--transition);
+      backdrop-filter: blur(10px);
+    }
+    
+    .lock-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .lock-screen h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 4.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: var(--white);
+      text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-weight: 700;
+    }
+    
+    .lock-screen p {
+      font-size: 1.2rem;
+      max-width: 500px;
+      text-align: center;
+      margin-bottom: 40px;
+      opacity: 0.8;
+      line-height: 1.6;
+    }
+    
+    .password-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      max-width: 320px;
+    }
+    
+    .password-input {
+      width: 100%;
+      padding: 18px 25px;
+      border-radius: 50px;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--white);
+      font-size: 1.3rem;
+      text-align: center;
+      letter-spacing: 5px;
+      outline: none;
+      transition: var(--transition);
+      font-weight: 500;
+      box-shadow: var(--inner-shadow);
+    }
+    
+    .password-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: normal;
+    }
+    
+    .password-input:focus {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+    }
+    
+    .unlock-btn {
+      background: var(--primary);
+      color: var(--white);
+      border: noe;
+      padding: 16px 45px;
+      border-radius: 50px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      margin-top: 10px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .unlock-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .unlock-btn:active {
+      transform: translateY(0);
+    }
+    
+    .error-msg {
+      color: #ff9d9d;
+      margin-top: 15px;
+      height: 25px;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+    
+    /* Main App */
+    .app-content {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      grid-template-rows: auto 1fr auto;
+      gap: 25px;
+      padding: 30px;
+      height: 100%;
+      min-height: 90vh;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.8s 0.2s forwards;
+    }
+    
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .app-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 3.5rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .icon-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+    
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: translateY(-3px);
+    }
+    
+    /* Journal Area */
+    .journal-section {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      grid-row: 2;
+    }
+    
+    .note-area {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .note-header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--white);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 20px 20px 0 0;
+    }
+    
+    .note-header h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+    
+    /* Enhanced Author Toggle */
+    .author-toggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50px;
+      overflow: hidden;
+      position: relative;
+      height: 40px;
+    }
+    
+    .author-option {
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+      min-width: 100px;
+      position: relative;
+    }
+    
+    .author-option.active {
+      color: white;
+      font-weight: 600;
+    }
+    
+    .author-indicator {
+      position: absolute;
+      height: 100%;
+      border-radius: 50px;
+      transition: var(--transition);
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .author-option.himanshu.active ~ .author-indicator {
+      background: var(--himanshu);
+      left: 0;
+      width: 50%;
+    }
+    
+    .author-option.sakshi.active ~ .author-indicator {
+      background: var(--sakshi);
+      left: 50%;
+      width: 50%;
+    }
+    
+    .textarea-container {
+      position: relative;
+      flex-grow: 1;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 100%;
+      padding: 25px;
+      font-size: 1.1rem;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: 'Inter', sans-serif;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 0 0 20px 20px;
+      line-height: 1.6;
+    }
+    
+    .char-counter {
+      position: absolute;
+      bottom: 15px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 5px 15px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+    
+    .char-counter.warning {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    
+    .note-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 20px 0 10px;
+    }
+    
+    .save-btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--white);
+      border: none;
+      padding: 14px 40px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+    }
+    
+    .save-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(255, 105, 180, 0.4);
+    }
+    
+    .save-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    /* Memories Section */
+    .memories-section {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      grid-row: 2;
+      grid-column: 2;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .section-header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    
+    .entries-container {
+      flex-grow: 1;
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-height: 60vh;
+    }
+    
+    .entry {
+      padding: 25px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      position: relative;
+      animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      transition: var(--transition);
+    }
+    
+    .entry:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    
+    .author.himanshu {
+      color: var(--himanshu);
+    }
+    
+    .author.sakshi {
+      color: var(--sakshi);
+    }
+    
+    .author-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .himanshu .author-icon {
+      background: var(--himanshu);
+      color: white;
+    }
+    
+    .sakshi .author-icon {
+      background: var(--sakshi);
+      color: white;
+    }
+    
+    .timestamp {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+    
+    .entry-content {
+      line-height: 1.7;
+      padding-left: 48px;
+      white-space: pre-wrap;
+      font-size: 1.1rem;
+    }
+    
+    .no-entries {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-light);
+      font-style: italic;
+      font-size: 1.2rem;
+    }
+    
+    /* Clear Button */
+    .clear-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(231, 76, 60, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--delete);
+      cursor: pointer;
+      transition: var(--transition);
+      opacity: 0.7;
+    }
+    
+    .clear-btn:hover {
+      background: rgba(231, 76, 60, 0.3);
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    
+    /* Photo Timeline Section */
+    .timeline-section {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .section-header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    
+    .timeline-container {
+      padding: 20px;
+      position: relative;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    /* Timeline line */
+    .timeline-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50px;
+      width: 4px;
+      background: linear-gradient(to bottom, var(--primary), var(--secondary));
+      border-radius: 2px;
+    }
+    
+    .timeline-item {
+      display: flex;
+      margin-bottom: 30px;
+      position: relative;
+      transition: var(--transition);
+    }
+    
+    .timeline-item:hover {
+      transform: translateX(5px);
+    }
+    
+    .timeline-date {
+      width: 100px;
+      padding: 8px 12px;
+      background: var(--glass);
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      text-align: center;
+      font-weight: 600;
+      color: var(--primary);
+      flex-shrink: 0;
+      margin-right: 30px;
+      z-index: 1;
+      box-shadow: var(--shadow);
+    }
+    
+    .timeline-content {
+      flex-grow: 1;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .timeline-content:hover {
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      transform: translateY(-3px);
+    }
+    
+    .timeline-content::before {
+      content: '';
+      position: absolute;
+      left: -15px;
+      top: 24px;
+      width: 0;
+      height: 0;
+      border-top: 12px solid transparent;
+      border-right: 15px solid rgba(255, 255, 255, 0.7);
+      border-bottom: 12px solid transparent;
+    }
+    
+    .photo-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .photo-title i {
+      color: var(--primary);
+    }
+    
+    .photo-preview {
+      width: 100%;
+      height: 200px;
+      border-radius: 15px;
+      overflow: hidden;
+      background: linear-gradient(45deg, #ffd9e8, #d9e8ff);
+    }
+    
+    .photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: var(--transition);
+    }
+    
+    .timeline-content:hover .photo-preview img {
+      transform: scale(1.05);
+    }
+    
+    .photo-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+    
+    /* Photo Modal */
+    .photo-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .photo-modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    
+    .photo-modal.active .modal-content {
+      transform: scale(1);
+    }
+    
+    .modal-img {
+      max-width: 100%;
+      max-height: 80vh;
+      display: block;
+    }
+    
+    .modal-details {
+      padding: 20px;
+      background: white;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+    
+    .modal-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: var(--text);
+      transition: var(--transition);
+    }
+    
+    .close-modal:hover {
+      background: white;
+      transform: rotate(90deg);
+    }
+    
+    /* Admin Section */
+    .admin-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+    }
+    
+    .admin-panel.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .admin-container {
+      background: white;
+      border-radius: 28px;
+      width: 90%;
+      max-width: 500px;
+      padding: 40px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+      transform: translateY(20px);
+      transition: var(--transition);
+    }
+    
+    .admin-panel.active .admin-container {
+      transform: translateY(0);
+    }
+    
+    .admin-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .admin-header h2 {
+      font-size: 2.2rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    
+    .admin-header p {
+      color: var(--text-light);
+    }
+    
+    .admin-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .admin-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .admin-form-group label {
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    .admin-form-control {
+      padding: 16px 20px;
+      border-radius: 15px;
+      border: 1px solid #e0e0e0;
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
+    
+    .admin-form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.2);
+    }
+    
+    .admin-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .admin-btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 15px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+    
+    .reset-btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+    
+    .cancel-btn {
+      background: #f0f0f0;
+      color: var(--text);
+    }
+    
+    .admin-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr auto;
+      }
+      
+      .memories-section {
+        grid-column: 1;
+        grid-row: 3;
+      }
+      
+      .timeline-section {
+        grid-row: 4;
+      }
+      
+      .timeline-container::before {
+        left: 30px;
+      }
+      
+      .timeline-date {
+        width: 80px;
+        margin-right: 20px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .app-container {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
+      }
+      
+      .app-content {
+        padding: 20px;
+      }
+      
+      .app-title {
+        font-size: 2.5rem;
+      }
+      
+      .password-input {
+        padding: 15px 20px;
+        font-size: 1.1rem;
+      }
+      
+      .unlock-btn {
+        padding: 14px;
+        font-size: 1.1rem;
+      }
+      
+      .author-toggle {
+        width: 100%;
+        margin-top: 10px;
+      }
+      
+      .author-option {
+        padding: 0 15px;
+        min-width: 80px;
+        font-size: 0.9rem;
+      }
+      
+      .timeline-container::before {
+        left: 15px;
+      }
+      
+      .timeline-date {
+        width: 70px;
+        margin-right: 15px;
+        font-size: 0.9rem;
+        padding: 6px 8px;
+      }
+      
+      .timeline-content::before {
+        left: -10px;
+      }
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 105, 180, 0.5);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 105, 180, 0.8);
+    }
+    
+    /* Notification styling */
+    @keyframes slideInDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 30px;
+      border-radius: 50px;
+      font-weight: 500;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      z-index: 3000;
+      animation: slideInDown 0.3s ease forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .notification.success {
+      background: #2ecc71;
+      color: white;
+    }
+    
+    .notification.error {
+      background: #e74c3c;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Lock Screen -->
+    <div class="lock-screen" id="lockScreen">
+      <h1>Our Journal</h1>
+      <p>Your private sanctuary for shared memories</p>
+      
+      <div class="password-container">
+        <input type="password" class="password-input" id="passwordInput" placeholder="Enter Passcode" maxlength="5" inputmode="numeric">
+        <button class="unlock-btn" id="unlockBtn">
+          <i class="fas fa-lock-open"></i> Unlock
+        </button>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+    </div>
+    
+    <!-- Main App Content -->
+    <div class="app-content" id="appContent">
+      <div class="header">
+        <h1 class="app-title">Our Journal</h1>
+        <div class="controls">
+          <button class="icon-btn" id="settingsBtn">
+            <i class="fas fa-sliders-h"></i>
+          </button>
+          <button class="icon-btn" id="lockBtn">
+            <i class="fas fa-lock"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="journal-section">
+        <div class="glass-panel note-area">
+          <div class="note-header">
+            <h2>Write Your Thoughts</h2>
+            <!-- Enhanced Author Toggle -->
+            <div class="author-toggle" id="authorToggle">
+              <div class="author-option himanshu active" data-author="Himanshu">Himanshu</div>
+              <div class="author-option sakshi" data-author="Sakshi">Sakshi</div>
+              <div class="author-indicator"></div>
+            </div>
+          </div>
+          <div class="textarea-container">
+            <textarea id="journalText" placeholder="Pour your heart out here..." maxlength="5000"></textarea>
+            <div class="char-counter" id="charCounter">0/5000</div>
+          </div>
+          <div class="note-actions">
+            <button class="save-btn" id="saveBtn">
+              <i class="fas fa-feather"></i> Save Entry
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="memories-section">
+        <div class="section-header">
+          <h2>Our Memories</h2>
+          <button class="icon-btn" id="refreshBtn">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+        <div class="glass-panel">
+          <div class="entries-container" id="entriesContainer">
+            <div class="no-entries">No entries yet. Write your first journal entry!</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Photo Timeline Section -->
+      <div class="timeline-section">
+        <div class="section-header">
+          <h2>Our Photo Timeline</h2>
+        </div>
+        <div class="glass-panel">
+          <div class="timeline-container" id="timelineContainer">
+            <!-- Timeline items will be generated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Photo Modal -->
+    <div class="photo-modal" id="photoModal">
+      <div class="modal-content">
+        <div class="close-modal" id="closeModal">
+          <i class="fas fa-times"></i>
+        </div>
+        <img class="modal-img" id="modalImg" src="" alt="Expanded Photo">
+        <div class="modal-details">
+          <div class="modal-title" id="modalTitle"></div>
+          <div class="modal-meta">
+            <span id="modalDate"></span>
+            <span id="modalAuthor"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-container">
+        <div class="admin-header">
+          <h2>Reset Journal</h2>
+          <p>This will delete all entries and cannot be undone</p>
+        </div>
+        <div class="admin-form">
+          <div class="admin-form-group">
+            <label for="adminPassword">Admin Password</label>
+            <input type="password" id="adminPassword" class="admin-form-control" placeholder="Enter admin password">
+          </div>
+          
+          <div class="admin-actions">
+            <button class="admin-btn cancel-btn" id="adminCancelBtn">
+              Cancel
+            </button>
+            <button class="admin-btn reset-btn" id="resetBtn">
+              Reset Journal
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD2wo-Y2i8lZhxS_yCeTfWmIhfMm09nxwY",
+      authDomain: "our-journal-ba0e6.firebaseapp.com",
+      projectId: "our-journal-ba0e6",
+      storageBucket: "our-journal-ba0e6.firebasestorage.app",
+      messagingSenderId: "72288542801",
+      appId: "1:72288542801:web:62ef83bf4dd7fb479e1870",
+      measurementId: "G-FE1SW10KBM"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // DOM Elements
+    const lockScreen = document.getElementById('lockScreen');
+    const appContent = document.getElementById('appContent');
+    const passwordInput = document.getElementById('passwordInput');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const lockBtn = document.getElementById('lockBtn');
+    const journalText = document.getElementById('journalText');
+    const saveBtn = document.getElementById('saveBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const entriesContainer = document.getElementById('entriesContainer');
+    const charCounter = document.getElementById('charCounter');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const adminPanel = document.getElementById('adminPanel');
+    const adminCancelBtn = document.getElementById('adminCancelBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const adminPassword = document.getElementById('adminPassword');
+    
+    // Author Toggle Elements
+    const authorToggle = document.getElementById('authorToggle');
+    const authorOptions = authorToggle.querySelectorAll('.author-option');
+    
+    // Timeline Elements
+    const timelineContainer = document.getElementById('timelineContainer');
+    const photoModal = document.getElementById('photoModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDate = document.getElementById('modalDate');
+    const modalAuthor = document.getElementById('modalAuthor');
+    const closeModal = document.getElementById('closeModal');
+    
+    // App Configuration
+    const PASSWORD = '37293';
+    const ADMIN_PASSWORD = 'wtfiswrong';
+    const MAX_CHARS = 5000;
+    
+    // App State
+    let journalEntries = [];
+    let photoGallery = [];
+    let currentAuthor = 'Himanshu';
+    
+    // Sample photo data structure
+    const samplePhotos = [
+      {
+        id: 'first-photo',
+        title: 'Our First Memory',
+        link: 'https://www.dropbox.com/scl/fi/kcjdzn8xoh0cmfsmnr5uu/WhatsApp-Image-2025-07-10-at-09.34.48_c9e697a1.jpg?rlkey=l5kdd178m5w5ptgfdplb9spe1&st=5lzy4pur&dl=1',
+        date: 'July 10, 2025',
+        author: 'Sakshi & Himanshu'
+      },
+      // Add more photos in this format:
+      /*
+      {
+        id: 'unique-id',
+        title: 'Photo Title',
+        link: 'your-dropbox-link-here?dl=1',
+        date: 'Date of photo',
+        author: 'Author name'
+      },
+      */
+    ];
+    
+    // Initialize
+    function initApp() {
+      passwordInput.focus();
+      setupEventListeners();
+      photoGallery = [...samplePhotos];
+      loadTimeline();
+    }
+    
+    // Setup all event listeners
+    function setupEventListeners() {
+      // Lock screen
+      unlockBtn.addEventListener('click', validatePassword);
+      passwordInput.addEventListener('keyup', e => {
+        if (e.key === 'Enter') validatePassword();
+      });
+      lockBtn.addEventListener('click', lockJournal);
+      
+      // Journal
+      saveBtn.addEventListener('click', saveEntry);
+      refreshBtn.addEventListener('click', loadEntries);
+      journalText.addEventListener('input', updateCharCounter);
+      
+      // Author toggle
+      authorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          authorOptions.forEach(opt => opt.classList.remove('active'));
+          option.classList.add('active');
+          currentAuthor = option.dataset.author;
+          showNotification(`Now writing as ${currentAuthor}`, 'success');
+        });
+      });
+      
+      // Admin panel
+      settingsBtn.addEventListener('click', () => adminPanel.classList.add('active'));
+      adminCancelBtn.addEventListener('click', () => adminPanel.classList.remove('active'));
+      resetBtn.addEventListener('click', resetJournal);
+      
+      // Photo Modal
+      closeModal.addEventListener('click', () => {
+        photoModal.classList.remove('active');
+      });
+    }
+    
+    // Password Validation
+    function validatePassword() {
+      const enteredPassword = passwordInput.value;
+      
+      if (enteredPassword === PASSWORD) {
+        lockScreen.classList.add('hidden');
+        appContent.style.display = 'grid';
+        errorMsg.textContent = '';
+        passwordInput.value = '';
+        initFirebaseListeners();
+      } else {
+        errorMsg.textContent = 'Incorrect passcode. Try again.';
+        passwordInput.value = '';
+        passwordInput.focus();
+        passwordInput.style.animation = 'shake 0.5s';
+        setTimeout(() => passwordInput.style.animation = '', 500);
+      }
+    }
+    
+    // Lock the journal
+    function lockJournal() {
+      appContent.style.display = 'none';
+      lockScreen.classList.remove('hidden');
+      passwordInput.focus();
+    }
+    
+    // Initialize Firebase listeners
+    function initFirebaseListeners() {
+      // Journal entries
+      db.collection("entries").orderBy("timestamp", "desc")
+        .onSnapshot(querySnapshot => {
+          journalEntries = [];
+          querySnapshot.forEach(doc => {
+            journalEntries.push({id: doc.id, ...doc.data()});
+          });
+          loadEntries();
+        });
+    }
+    
+    // Update character counter
+    function updateCharCounter() {
+      const length = journalText.value.length;
+      charCounter.textContent = `${length}/${MAX_CHARS}`;
+      charCounter.classList.toggle('warning', length > MAX_CHARS * 0.9);
+    }
+    
+    // Save journal entry to Firebase
+    function saveEntry() {
+      const content = journalText.value.trim();
+      
+      if (content === '') {
+        showNotification('Please write something before saving', 'error');
+        return;
+      }
+      
+      if (content.length > MAX_CHARS) {
+        showNotification(`Message is too long! Max ${MAX_CHARS} characters`, 'error');
+        return;
+      }
+      
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      
+      db.collection("entries").add({
+        author: currentAuthor,
+        content,
+        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+      })
+      .then(() => {
+        journalText.value = '';
+        updateCharCounter();
+        showNotification('Entry saved successfully!', 'success');
+      })
+      .catch(error => {
+        console.error("Error saving entry:", error);
+        showNotification('Failed to save entry', 'error');
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-feather"></i> Save Entry';
+      });
+    }
+    
+    // Load and display journal entries
+    function loadEntries() {
+      if (journalEntries.length === 0) {
+        entriesContainer.innerHTML = '<div class="no-entries">No entries yet. Write your first journal entry!</div>';
+        return;
+      }
+      
+      entriesContainer.innerHTML = '';
+      const now = new Date();
+      
+      journalEntries.forEach(entry => {
+        const date = entry.timestamp.toDate();
+        const formattedDate = date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        // Check if entry is less than 2 hours old
+        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+        const showClearBtn = date > twoHoursAgo;
+        
+        const entryElement = document.createElement('div');
+        entryElement.className = 'entry';
+        entryElement.innerHTML = `
+          <div class="entry-header">
+            <div class="author ${entry.author.toLowerCase()}">
+              <div class="author-icon">${entry.author.charAt(0)}</div>
+              <span>${entry.author}</span>
+            </div>
+            <div class="timestamp">${formattedDate}</div>
+          </div>
+          <div class="entry-content">${entry.content}</div>
+        `;
+        
+        if (showClearBtn) {
+          const clearBtn = document.createElement('div');
+          clearBtn.className = 'clear-btn';
+          clearBtn.innerHTML = '<i class="fas fa-times"></i>';
+          clearBtn.addEventListener('click', () => deleteEntry(entry.id));
+          entryElement.appendChild(clearBtn);
+        }
+        
+        entriesContainer.appendChild(entryElement);
+      });
+    }
+    
+    // Delete a journal entry
+    function deleteEntry(entryId) {
+      if (!confirm('Are you sure you want to delete this entry?')) return;
+      
+      db.collection("entries").doc(entryId).delete()
+        .then(() => {
+          showNotification('Entry deleted', 'success');
+        })
+        .catch(error => {
+          console.error("Error deleting entry:", error);
+          showNotification('Failed to delete entry', 'error');
+        });
+    }
+    
+    // Reset journal (admin function)
+    function resetJournal() {
+      if (adminPassword.value !== ADMIN_PASSWORD) {
+        showNotification('Incorrect admin password', 'error');
+        return;
+      }
+      
+      if (!confirm('Are you sure you want to reset the journal? All entries will be permanently deleted!')) return;
+      
+      // Delete all entries
+      db.collection("entries").get()
+        .then(querySnapshot => {
+          const batch = db.batch();
+          querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          return batch.commit();
+        })
+        .then(() => {
+          showNotification('Journal reset successfully', 'success');
+          adminPanel.classList.remove('active');
+          adminPassword.value = '';
+        })
+        .catch(error => {
+          console.error("Error resetting journal:", error);
+          showNotification('Failed to reset journal', 'error');
+        });
+    }
+    
+    // Load and display photo timeline
+    function loadTimeline() {
+      if (photoGallery.length === 0) {
+        timelineContainer.innerHTML = '<div class="no-entries" style="text-align: center; padding: 40px;">No photos yet. Add your memories to the timeline!</div>';
+        return;
+      }
+      
+      timelineContainer.innerHTML = '';
+      
+      // Sort photos by date (reverse chronological order)
+      const sortedPhotos = [...photoGallery].sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+      });
+      
+      sortedPhotos.forEach(photo => {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = 'timeline-item';
+        timelineItem.innerHTML = `
+          <div class="timeline-date">${photo.date}</div>
+          <div class="timeline-content" data-id="${photo.id}">
+            <div class="photo-title">
+              <i class="fas fa-image"></i> ${photo.title}
+            </div>
+            <div class="photo-preview">
+              <img src="${convertDropboxLink(photo.link)}" alt="${photo.title}">
+            </div>
+            <div class="photo-meta">
+              <span><i class="fas fa-user"></i> ${photo.author}</span>
+              <span><i class="fas fa-calendar"></i> ${photo.date}</span>
+            </div>
+          </div>
+        `;
+        
+        timelineItem.querySelector('.timeline-content').addEventListener('click', () => {
+          showPhotoModal(photo);
+        });
+        
+        timelineContainer.appendChild(timelineItem);
+      });
+    }
+    
+    // Convert Dropbox link to direct image link
+    function convertDropboxLink(link) {
+      try {
+        const url = new URL(link);
+        if (url.hostname === 'www.dropbox.com') {
+          url.hostname = 'dl.dropboxusercontent.com';
+          url.searchParams.delete('dl');
+        }
+        return url.toString();
+      } catch (e) {
+        console.error('Invalid URL', e);
+        return link;
+      }
+    }
+    
+    // Show photo in modal
+    function showPhotoModal(photo) {
+      modalImg.src = convertDropboxLink(photo.link);
+      modalTitle.textContent = photo.title;
+      modalDate.textContent = photo.date;
+      modalAuthor.textContent = photo.author;
+      photoModal.classList.add('active');
+    }
+    
+    // Show notification
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        ${message}
+      `;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+    
+    // Initialize the app
+    initApp();
+    
+    // Add keyframe animation for shake effect
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+        20%, 40%, 60%, 80% { transform: translateX(10px); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
